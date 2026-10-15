@@ -1,3 +1,4 @@
+
 {
     "robot_id": "grabber_robot_01",
     "battery": {"capacity": 100, "current_level": 80},
