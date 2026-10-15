@@ -25,32 +25,30 @@ class ConfigurationManager:
             ConfigParseError: If the file exists but cannot be parsed.
         """
         # Robot class tied to specific file format
-        with open(config_file, 'r') as file:
-            self.config = json.load(file)
-        # with open(config_file, 'r') as file:
-        #     config = yaml.safe_load(file)
+        if '.json' in config_file:
+            try:
+                with open(config_file, 'r') as file:
+                    self.config = json.load(file)
+            except json.JSONDecodeError as e:
+                print("Error loading JSON file:", e)
+                raise ConfigParseError(self.config_file, str(e)) from e
+                
+        if '.yaml' in config_file:
+            try:
+                with open(config_file, 'r') as file:
+                    self.config = yaml.safe_load(file)
+            except yaml.YAMLError as e:
+                print("Error loading YAML file:", e)
+                raise ConfigParseError(self.config_file, str(e)) from e
+
+
         self.robot_id = self.config['robot_id']
         self.battery = self.config['battery']
         self.motor = self.config['motor']
-        self.is_grabbing = self.config['is_grabbing']
-
-        print(self.robot_id)
 
         if not os.path.exists(self.config_file):
             logger.error("Config file not found: %s", self.config_file)
             raise ConfigFileNotFoundError(self.config_file)
-
-        # try:
-        #     with open(self.config_file, 'r') as f:
-        #         self.config = self._parse_file(f)
-        #     logger.info("Loaded config: %s", self.config_file)
-        # except (json.JSONDecodeError, ValueError) as e:
-        #     logger.error("Parse error in '%s': %s", self.config_file, e)
-        #     raise ConfigParseError(self.config_file, str(e)) from e
-
-    def save(self, output_file=None):
-        """Save current configuration to file."""
-        # Save to file (auto-detect format from extension)
 
     # support value access
     # get('robot_id'), get('sensors.ir_count'), get('unknown_key', default=0)
@@ -65,14 +63,10 @@ class ConfigurationManager:
     def validate(self) -> None:
         """Validate calibration config, raising CalibrationValidationError if invalid."""
         errors = []
-        print("starting validation...")
         if 'robot_id' not in self.config:
             errors.append("Missing required field: sensor_name")
-        else:
-            print("found id")
 
         if 'battery' in self.config:
-            print("found battery")
             battery = self.config['battery']
 
             if not isinstance(battery, dict):
@@ -83,8 +77,6 @@ class ConfigurationManager:
                 errors.append("capacity must be an integer")
             elif battery['capacity'] <= 0:
                 errors.append("capacity must be greater than zero")
-            else:
-                print("found capacity")
 
             if not isinstance(battery, dict):
                 errors.append("battery must be a dictionary")
@@ -96,11 +88,8 @@ class ConfigurationManager:
                 errors.append("current_level must be equal to or greater than zero")
             elif battery['current_level'] > battery['capacity']:
                 errors.append("current_level must be lower then capacity")
-            else:
-                print("found current_level")
 
         if 'motor' in self.config:
-            print("found motor")
             motor = self.config['motor']
 
             if not isinstance(motor, dict):
@@ -111,8 +100,6 @@ class ConfigurationManager:
                 errors.append("speed must be an integer")
             elif motor['speed'] < 0:
                 errors.append("speed must be equal to or greater than zero")
-            else:
-                print("found speed")
 
             if not isinstance(motor, dict):
                 errors.append("motor must be a dictionary")
@@ -120,8 +107,6 @@ class ConfigurationManager:
                 errors.append("motor is_running is required")
             elif not isinstance(motor['is_running'], bool):
                 errors.append("is_running must be a bool")
-            else:
-                print("found is_running")
 
         if errors:
             logger.warning("Validation failed with %d error(s)", len(errors))
@@ -131,15 +116,24 @@ class ConfigurationManager:
 
     # Save() configuration
     # write back to file in detected format, printed nicley for readability
+    def save(self, output_file=None):
+        """Save current configuration to file."""
+        # Save to file (auto-detect format from extension)
 
-config_manager = ConfigurationManager('example_configs/grabber_robot.json')
-config_manager.validate()
+        print(self.robot_id)
+        print(self.battery)
+        print(self.motor)
 
-print("\n")
-print(config_manager.battery)
-print(config_manager.motor)
-print(config_manager.is_grabbing)
 
+print("\nJSON:")
+json_config_manager = ConfigurationManager('example_configs/grabber_robot.json')
+json_config_manager.validate()
+json_config_manager.save()
+
+print("\nYAML:")
+yaml_config_manager = ConfigurationManager('example_configs/vacume_robot.yaml')
+yaml_config_manager.validate()
+yaml_config_manager.save()
 
 # securityCamera = SecurityCamera("Security Camera")
 # print(securityCamera.report_status)

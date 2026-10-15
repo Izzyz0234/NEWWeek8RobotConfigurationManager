@@ -1,4 +1,8 @@
 
 robot_id: vacume_robot_01
-battery: capacity: 100 current_level: 80
-motor: speed: 1, is_running: true
+battery: 
+  capacity: 100 
+  current_level: 0
+motor: 
+  speed: 0
+  is_running: false
