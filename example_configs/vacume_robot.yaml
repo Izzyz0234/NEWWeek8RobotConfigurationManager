@@ -1,8 +1,7 @@
-
 robot_id: vacume_robot_01
-battery: 
-  capacity: 100 
+battery:
+  capacity: 100
   current_level: 0
-motor: 
+motor:
   speed: 0
   is_running: false
