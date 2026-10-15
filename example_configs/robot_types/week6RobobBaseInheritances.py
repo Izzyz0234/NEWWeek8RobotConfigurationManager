@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from battery import Battery
-from sensor import Sensor
-from motor import Motor
+from example_configs.robot_types.battery import Battery
+from example_configs.robot_types.sensor import Sensor
+from example_configs.robot_types.motor import Motor
 
 class RobotBase(ABC):
     """Provide shared components and behavior for robot types."""
