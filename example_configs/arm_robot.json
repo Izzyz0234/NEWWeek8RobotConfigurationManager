@@ -1,0 +1,6 @@
+{
+    "robot_id": "grabber_robot_01",
+    "battery": {"capacity": 100, "current_level": 80},
+    "motor": {"speed": 1, "is_running": true},
+    "is_grabbing": true
+}
