@@ -1,5 +1,6 @@
 from typing import Dict, Optional, Any
 from configuration_errors import ConfigFileNotFoundError, ConfigParseError, ConfigValidationError
+from example_configs.robot_types.week6RobobBaseInheritances import RobotBase, SecurityCamera
 import os, logging, json, yaml
 
 logger = logging.getLogger(__name__)
@@ -9,17 +10,24 @@ class ConfigurationManager:
 
     def __init__(self, config_file: str) -> None:
         """Initialize with configuration file path."""
+        self.load(config_file)
 
 
     # Load() Json and Yaml file
     # raise ConfigFileNotFOundError and ConfigParseError
-    def load(self) -> None:
+    def load(self, config_file):
         """Load configuration, raising typed exceptions on failure.
 
         Raises:
             ConfigFileNotFoundError: If the config file does not exist.
             ConfigParseError: If the file exists but cannot be parsed.
         """
+        # Robot class tied to specific file format
+        with open(config_file) as f:
+            config = json.load(f)
+        self.name = config['name']
+        self.ir_sensors = config['ir_count']
+
         if not os.path.exists(self.config_file):
             logger.error("Config file not found: %s", self.config_file)
             raise ConfigFileNotFoundError(self.config_file)
@@ -54,3 +62,8 @@ class ConfigurationManager:
     # Save() configuration
     # write back to file in detected format, printed nicley for readability
 
+config_manager = ConfigurationManager('robot_config.json')
+config_manager.validate()
+
+securityCamera = SecurityCamera("Security Camera")
+print(securityCamera.report_status)
