@@ -6,17 +6,27 @@ import json
 from configuration_manager import ConfigurationManager
 from configuration_errors import ConfigFileNotFoundError, ConfigParseError, ConfigValidationError
 
+class LineFollowerRobot:
+    """Focuses only on behavior."""
+
+    def __init__(self, name, ir_sensors):
+        self.name = name
+        self.ir_sensors = ir_sensors
+
+    def read_ir_sensors(self):
+        """Behavior - independent of how config was loaded"""
+        return [0 if i % 2 == 0 else 1 for i in range(self.ir_sensors)]
+
 
 class TestConfigurationManagerLoad(unittest.TestCase):
 
     def setUp(self):
         """Create a minimal valid config file for use in tests."""
-        self.valid_file = 'test_valid_config.json'
+        self.valid_file = 'example_configs/test_get_config.json'
         with open(self.valid_file, 'w') as f:
             json.dump({
                 'robot_id': 'test_robot',
-                'battery': {'capacity': 100, 'current_level': 80},
-                'motor': {'speed': 1, 'is_running': True}
+                'sensors': {'ir_count': 4, 'threshold': 0.5}
             }, f)
 
     def tearDown(self):
@@ -27,6 +37,7 @@ class TestConfigurationManagerLoad(unittest.TestCase):
     def test_load_valid_json(self):
         """ConfigurationManager loads a valid JSON file without error."""
         # YOUR CODE HERE
+        self.valid_file = 'example_configs/test_get_config.json'
         if '.json' in self.valid_file:
             self.file_type = "JSON"
             try:
@@ -35,37 +46,36 @@ class TestConfigurationManagerLoad(unittest.TestCase):
             except json.JSONDecodeError as e:
                 print("Error loading JSON file:", e)
                 raise ConfigParseError(self.valid_file, str(e)) from e
-        pass
+        
 
     def test_load_missing_file_raises_error(self):
         """ConfigFileNotFoundError raised when file does not exist."""
         # YOUR CODE HERE — hint: use self.assertRaises()
-        print("Error loading JSON file:")
-        ConfigFileNotFoundError(self.valid_file)
-        pass
+        # print("Error loading JSON file:")
+        # ConfigFileNotFoundError(self.valid_file)
+        self.assertRaises(ConfigFileNotFoundError)
+        
 
     def test_load_corrupted_file_raises_error(self):
         """ConfigParseError raised when file contains invalid JSON/XML/YAML."""
         # YOUR CODE HERE — create a temp file with invalid content, then load it
-        self.valid_file = 'test_get_config.json'
+        self.valid_file = 'example_configs/test_get_config.json'
         with open(self.valid_file, 'w') as f:
             json.dump({
-                'robot_id': False,
-                'battery': {'capacity': -100, 'current_level': True},
-                'motor': {'speed': "Sand", 'is_running': 32}
+                'robot_id': 32,
+                'sensors': {'ir_count': True, 'threshold': "Sand"}
             }, f)
-        pass
+        ConfigurationManager.load(self, self.valid_file)
 
 
 class TestConfigurationManagerGet(unittest.TestCase):
 
     def setUp(self):
-        self.valid_file = 'test_get_config.json'
+        self.valid_file = 'example_configs/test_get_config.json'
         with open(self.valid_file, 'w') as f:
             json.dump({
                 'robot_id': 'test_robot',
-                'battery': {'capacity': 100, 'current_level': 80},
-                'motor': {'speed': 1, 'is_running': True}
+                'sensors': {'ir_count': 4, 'threshold': 0.5}
             }, f)
         self.config = ConfigurationManager(self.valid_file)
 
@@ -76,8 +86,12 @@ class TestConfigurationManagerGet(unittest.TestCase):
     def test_get_simple_key(self):
         """get() returns correct value for a top-level key."""
         # YOUR CODE HERE
-        pass
-
+        config = ConfigurationManager('example_configs/test_get_config.json')
+        config.validate()
+        robot = LineFollowerRobot(
+            name=config.get('name'),
+            ir_sensors=config.get('sensors.ir_count')
+)
     def test_get_nested_key_dot_notation(self):
         """get() returns correct value for a nested key using dot notation."""
         # YOUR CODE HERE — e.g., config.get('sensors.ir_count') should return 4

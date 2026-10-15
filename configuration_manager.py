@@ -43,21 +43,28 @@ class ConfigurationManager:
                 print("Error loading YAML file:", e)
                 raise ConfigParseError(self.config_file, str(e)) from e
 
-
-        self.robot_id = self.config['robot_id']
-        self.battery = self.config['battery']
-        self.motor = self.config['motor']
-
         if not os.path.exists(self.config_file):
             logger.error("Config file not found: %s", self.config_file)
             raise ConfigFileNotFoundError(self.config_file)
 
     # support value access
     # get('robot_id'), get('sensors.ir_count'), get('unknown_key', default=0)
-    def get(self, key: str, default: Optional[Any] = None) -> Any:
-        """Safely retrieve configuration value."""
+    def get(self, key, default=None) -> Any:
+        """Safely retrieve configuration value.
 
+        Supports dot notation: get('sensors.ir_count')
+        Returns default if key not found.
+        """
+        current = self.config
 
+        for part in key.split('.'):
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                return default
+        
+        return current
+    
 
     # Valadate() configuration
     # check feilds, type validation, range validation (sensor count > 0)
@@ -150,20 +157,48 @@ class ConfigurationManager:
         else:
             raise ValueError(f"Unsupported config format: {target_file}")
         
-        # Save to file (auto-detect format from extension)
-        # data = {'robot_id': 'vacume_robot_01', 
-        #                'battery': ['capacity' 100, 'current_level' 0], 
-        #                'motor': ['speed': 0, 'is_running': false]}
-        
-        # yaml.safe_dump(data, output_file)
+class GrabberRobot:
+    """Focuses only on behavior."""
 
-        print(self.file_type, ":\n",
-              "Robot ID: ", self.robot_id, "\n",
-              "Capacity: ", self.battery['capacity'], "\n",
-              "Current Level: ", self.battery['current_level'], "\n",
-              "Speed: ", self.motor['speed'], "\n",
-              "Is On: ", self.motor['is_running'], "\n")
 
+    def __init__(self, robot_id, capacity, current_level, speed, is_running):
+        self.robot_id = robot_id
+        self.capacity = capacity
+        self.current_level = current_level
+        self.speed = speed
+        self.is_running = is_running
+
+    def read_capacity(self):
+        return self.capacity
+
+    def read_current_level(self):
+        return self.current_level
+
+    def read_speed(self):
+        return self.speed
+
+    def read_is_running(self):
+        return self.is_running
+
+    def read_all(self):
+        print("Robot ID: ", self.robot_id, "\n",
+          "Capacity: ", self.capacity, "\n",
+          "Current Level: ", self.current_level, "\n",
+          "Speed: ", self.speed, "\n",
+          "Is On: ", self.is_running, "\n")
+
+
+
+test_config_manager = ConfigurationManager('example_configs/test_get_config.json')
+test_config_manager.validate()
+robot = GrabberRobot(
+    robot_id=test_config_manager.get('robot_id'),
+    capacity=test_config_manager.get('battery.capacity'),
+    current_level=test_config_manager.get('battery.current_level'),
+    speed=test_config_manager.get('motor.speed'),
+    is_running=test_config_manager.get('motor.is_running')
+)
+print(robot.read_all())
 
 json_config_manager = ConfigurationManager('example_configs/grabber_robot.json')
 json_config_manager.validate()
@@ -175,3 +210,5 @@ yaml_config_manager.save()
 
 securityCamera = SecurityCamera("Security Camera")
 # print(securityCamera.report_status)
+
+#config.get('batter.capacity')
