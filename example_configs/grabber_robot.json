@@ -5,7 +5,7 @@
         "current_level": 80
     },
     "motor": {
-        "speed": 1,
+        "speed": 10,
         "is_running": true
     }
 }
